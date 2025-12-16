@@ -1,9 +1,8 @@
-import type { ObjectId } from "mongoose";
-import type { ROOM_STATUS } from "../lib/constants/enum";
+import { Types } from "mongoose";
+import { ROOM_STATUS } from "../lib/constants/enum";
 
 export interface IRoom {
-  roomId: ObjectId;
-  creatorId: ObjectId;
-  joinedUser: ObjectId;
-  status: ROOM_STATUS;
+  creatorId: Types.ObjectId;
+  joinedUser?: Types.ObjectId;
+  status?: ROOM_STATUS;
 }

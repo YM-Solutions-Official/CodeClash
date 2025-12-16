@@ -4,22 +4,18 @@ import { ROOM_MODEL, ROOM_STATUS } from "../lib/constants";
 
 const RoomSchema = new Schema<IRoom>(
   {
-    roomId: {
-      type: Types.ObjectId,
-      required: true,
-    },
     creatorId: {
       type: Types.ObjectId,
       required: true,
     },
     joinedUser: {
       type: Types.ObjectId,
-      required: true,
+      required: false,
     },
     status: {
-      enum: ROOM_STATUS,
+      type:String,
+      enum: Object.values(ROOM_STATUS),
       required: true,
-      default: ROOM_STATUS.WAITING,
     },
   },
   { timestamps: true }

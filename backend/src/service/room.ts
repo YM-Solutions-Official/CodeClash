@@ -6,7 +6,6 @@ export async function createRoom(req: Request, res: Response) {
 
   try {
     const room = await RoomModel.create({
-      roomId,
       creatorId,
       joinedUser,
       status,

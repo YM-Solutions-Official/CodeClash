@@ -2,19 +2,16 @@ import { Request, Response } from "express";
 import RoomModel from "../models/room";
 
 export async function createRoom(req: Request, res: Response) {
-  const { roomId, creatorId, joinedUser, status } = req.body;
+  const { creatorId } = req.body;
 
   try {
     const room = await RoomModel.create({
-      roomId,
       creatorId,
-      joinedUser,
-      status,
     });
     return res.status(201).json({
       status: "sucess",
       message: "Room created successfully",
-      room: { _id: room._id, roomId, creatorId, joinedUser, status },
+      room: { _id: room._id, creatorId },
     });
   } catch (error) {
     console.log(error);

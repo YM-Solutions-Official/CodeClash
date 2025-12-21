@@ -1,8 +1,9 @@
 {
-  "name": "backend",
+  "name": "codeclash-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "CodeClash real-time coding battle backend",
+  "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc",
@@ -11,7 +12,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.2",

@@ -183,7 +183,7 @@ function setupRoomSockets(io) {
                 }
                 await room.save();
                 socket.to(roomId).emit("opponent_submitted", {
-                    userId: socket.id
+                    userId: socket.id,
                 });
                 callback({
                     success: true,

@@ -41,7 +41,7 @@ export function setupRoomSockets(io: Server) {
           ? [room.creatorId, room.joinedUser]
           : [room.creatorId];
 
-        let timeRemaining = null;
+        let timeRemaining: number | null = null;
         if (room.status === ROOM_STATUS.ACTIVE && room.startTime) {
           const time = Math.floor((Date.now() - room.startTime) / 1000);
           timeRemaining = Math.max(0, room.duration - time);
@@ -88,7 +88,7 @@ export function setupRoomSockets(io: Server) {
 
         socket.to(roomId).emit("user_joined", socket.id);
 
-        let timeRemaining = null;
+        let timeRemaining: number | null = null;
         if (room.status === ROOM_STATUS.ACTIVE && room.startTime) {
           const time = Math.floor((Date.now() - room.startTime) / 1000);
           timeRemaining = Math.max(0, room.duration - time);

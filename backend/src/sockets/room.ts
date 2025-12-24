@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import RoomModel from "../models/room";
 import { HARDCODED_PROBLEM, ROOM_STATUS } from "../lib/constants";
 import { checkMatchEnd } from "./helper";
+import { generateRoomId } from "../lib/nanoid";
 
 export function setupRoomSockets(io: Server) {
   io.on("connection", (socket: Socket) => {
@@ -10,16 +11,21 @@ export function setupRoomSockets(io: Server) {
     // Create Room
     socket.on("create_room", async (_, callback: any) => {
       try {
-        const room = await RoomModel.create({
+        const room = new RoomModel({
           creatorId: socket.id,
           status: ROOM_STATUS.WAITING,
         });
 
-        socket.join(room._id.toString());
+        const roomCode = generateRoomId();
+
+        room.roomCode = roomCode;
+        await room.save();
+
+        socket.join(roomCode);
 
         console.log(`Room created ${room._id} by ${socket.id}`);
         callback({
-          roomId: room._id.toString(),
+          roomId: room._id,
           creatorId: socket.id,
         });
       } catch (error) {
@@ -54,6 +60,7 @@ export function setupRoomSockets(io: Server) {
 
         callback({
           users,
+          roomCode: room.roomCode,
           status: room.status,
           creatorId: room.creatorId,
           problem: room.status === ROOM_STATUS.ACTIVE ? room.problem : null,
@@ -73,9 +80,9 @@ export function setupRoomSockets(io: Server) {
     });
 
     // Join Room
-    socket.on("join_room", async ({ roomId }, callback: any) => {
+    socket.on("join_room", async ({ roomCode }, callback: any) => {
       try {
-        const room = await RoomModel.findById(roomId);
+        const room = await RoomModel.findOne({ roomCode });
 
         if (!room) return callback({ error: "Room not found" });
 
@@ -84,9 +91,9 @@ export function setupRoomSockets(io: Server) {
         room.joinedUser = socket.id;
         await room.save();
 
-        socket.join(roomId);
+        socket.join(roomCode);
 
-        socket.to(roomId).emit("user_joined", socket.id);
+        socket.to(roomCode).emit("user_joined", socket.id);
 
         let timeRemaining: number | null = null;
         if (room.status === ROOM_STATUS.ACTIVE && room.startTime) {
@@ -95,6 +102,7 @@ export function setupRoomSockets(io: Server) {
         }
 
         callback({
+          roomId: room._id,
           users: [room.creatorId, room.joinedUser],
           status: room.status,
           creatorId: room.creatorId,
@@ -109,7 +117,7 @@ export function setupRoomSockets(io: Server) {
           endTime: room.endTime,
         });
 
-        console.log(`User ${socket.id} joined room ${roomId}`);
+        console.log(`User ${socket.id} joined room ${roomCode}`);
       } catch (error) {
         console.error("Join room error:", error);
         callback({ error: "Failed to join room" });
@@ -134,7 +142,7 @@ export function setupRoomSockets(io: Server) {
 
         room.status = ROOM_STATUS.ACTIVE;
         room.problem = HARDCODED_PROBLEM;
-        room.startTime = Date.now();
+        room.startTime = Date.now() + 3000; // 3 sec for countdown
         await room.save();
 
         const matchData = {
@@ -144,7 +152,7 @@ export function setupRoomSockets(io: Server) {
           endTime: room.startTime + room.duration * 1000,
         };
 
-        io.to(roomId).emit("match_started", matchData);
+        io.to(room.roomCode!).emit("match_started", matchData);
         callback({ success: true });
         console.log(`Match started in room ${roomId}`);
 

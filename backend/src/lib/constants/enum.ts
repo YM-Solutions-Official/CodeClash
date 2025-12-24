@@ -3,3 +3,8 @@ export enum ROOM_STATUS {
   ACTIVE = "active",
   FINISHED = "finished",
 }
+
+export const ROOM_ID = {
+  ALPHABET: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+  SIZE: 6,
+};

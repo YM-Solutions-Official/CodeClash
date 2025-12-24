@@ -7,6 +7,10 @@ const RoomSchema = new Schema<IRoom>(
     roomId: {
       type: String,
     },
+    roomCode: {
+      type: String,
+      maxLength: 6,
+    },
     creatorId: {
       type: String,
       required: true,

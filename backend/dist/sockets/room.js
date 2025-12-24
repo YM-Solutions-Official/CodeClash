@@ -7,6 +7,7 @@ exports.setupRoomSockets = setupRoomSockets;
 const room_1 = __importDefault(require("../models/room"));
 const constants_1 = require("../lib/constants");
 const helper_1 = require("./helper");
+const nanoid_1 = require("../lib/nanoid");
 function setupRoomSockets(io) {
     io.on("connection", (socket) => {
         console.log("New client connected", socket.id);
@@ -17,6 +18,7 @@ function setupRoomSockets(io) {
                     creatorId: socket.id,
                     status: constants_1.ROOM_STATUS.WAITING,
                 });
+                const roomCode = (0, nanoid_1.generateRoomId)();
                 socket.join(room._id.toString());
                 console.log(`Room created ${room._id} by ${socket.id}`);
                 callback({

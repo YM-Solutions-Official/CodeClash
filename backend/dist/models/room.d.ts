@@ -33,6 +33,15 @@ declare const RoomModel: import("mongoose").Model<IRoom, {}, {}, {
     }, "id"> & {
         id: string;
     }> | undefined;
+    roomCode?: import("mongoose").SchemaDefinitionProperty<string | undefined, IRoom, import("mongoose").Document<unknown, {}, IRoom, {
+        id: string;
+    }, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & Omit<IRoom & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & {
+        id: string;
+    }> | undefined;
     creatorId?: import("mongoose").SchemaDefinitionProperty<string, IRoom, import("mongoose").Document<unknown, {}, IRoom, {
         id: string;
     }, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & Omit<IRoom & {

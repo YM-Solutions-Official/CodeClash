@@ -89,47 +89,7 @@ export async function executeCode(
   testCases: any[],
   language: string
 ) {
-  const results: any[] = [];
-
-  for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
-
-    try {
-      // Parse input and expected output
-      const input = parseInput(testCase.input);
-      const expectedOutput = parseOutput(testCase.output);
-
-      // Create a safe execution context
-      const startTime = Date.now();
-      const result = await runWithPiston(code, input, language);
-      const executionTime = Date.now() - startTime;
-
-      // Compare results
-      const passed = JSON.stringify(result) === JSON.stringify(expectedOutput);
-
-      results.push({
-        testCase: i + 1,
-        input: testCase.input,
-        expectedOutput: testCase.output,
-        actualOutput: JSON.stringify(result),
-        passed,
-        executionTime,
-        error: null,
-      });
-    } catch (error: any) {
-      results.push({
-        testCase: i + 1,
-        input: testCase.input,
-        expectedOutput: testCase.output,
-        actualOutput: null,
-        passed: false,
-        executionTime: 0,
-        error: error.message,
-      });
-    }
-  }
-
-  return results;
+  return await runWithPiston(code, testCases, language);
 }
 
 async function runInSandbox(code: string, input: any, language: string) {
@@ -156,13 +116,41 @@ async function runInSandbox(code: string, input: any, language: string) {
   return vm.run(wrappedCode);
 }
 
-async function runWithPiston(code: string, input: any, language: string) {
+async function runWithPiston(code: string, testCases: any[], language: string) {
   const wrappedCode = `
-${code}
+${code};
 
-// call solution
-const result = twoSum(${JSON.stringify(input.nums)}, ${input.target});
-console.log(JSON.stringify(result));
+function deepEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+const testCases = ${JSON.stringify(testCases)};
+const results = [];
+
+for (let i = 0; i < testCases.length; i++) {
+  const input = ${JSON.stringify(parseInput(testCases[0].input))};
+  const expected = ${JSON.stringify(parseOutput(testCases[0].output))};
+
+  try {
+    const start = Date.now();
+    const output = twoSum(input.nums, input.target);
+    const time = Date.now() - start;
+
+    results.push({
+      passed: deepEqual(output, expected),
+      output,
+      expected,
+      executionTime: time,
+    });
+  } catch (err) {
+    results.push({
+      passed: false,
+      error: err.message,
+    });
+  }
+}
+
+console.log(JSON.stringify(results));
 `;
 
   const response = await axios.post(
@@ -170,21 +158,16 @@ console.log(JSON.stringify(result));
     {
       language,
       version: "18.15.0",
-      files: [
-        {
-          name: "main.js",
-          content: wrappedCode,
-        },
-      ],
+      files: [{ name: "main.js", content: wrappedCode }],
+      run_timeout: 3000,
+      run_memory_limit: 128000000,
     },
-    {
-      timeout: 10000,
-    }
+    { timeout: 10000 }
   );
 
   if (response.data.run.stderr) {
     throw new Error(response.data.run.stderr);
   }
 
-  return JSON.parse(response.data.run.stdout.trim());
+  return JSON.parse(response.data.run.stdout);
 }

@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import RoomModel from "../models/room";
 import { ROOM_STATUS } from "../lib/constants";
 import { IRoom } from "../types";
+import axios from "axios";
 
 export function findWinner(room: IRoom): string {
   const isCreatorSubmitted = room.submissions?.creator?.submitted;
@@ -61,14 +62,14 @@ export function parseInput(inputStr: string): any {
   try {
     const numsMatch = inputStr.match(/nums\s*=\s*(\[.*?\])/);
     const targetMatch = inputStr.match(/target\s*=\s*(\d+)/);
-    
+
     if (numsMatch && targetMatch) {
       return {
         nums: JSON.parse(numsMatch[1]),
-        target: parseInt(targetMatch[1])
+        target: parseInt(targetMatch[1]),
       };
     }
-    
+
     return JSON.parse(inputStr);
   } catch (error) {
     throw new Error(`Failed to parse input: ${inputStr}`);
@@ -100,7 +101,7 @@ export async function executeCode(
 
       // Create a safe execution context
       const startTime = Date.now();
-      const result = await runInSandbox(code, input, language);
+      const result = await runWithPiston(code, input, language);
       const executionTime = Date.now() - startTime;
 
       // Compare results
@@ -153,4 +154,37 @@ async function runInSandbox(code: string, input: any, language: string) {
   `;
 
   return vm.run(wrappedCode);
+}
+
+async function runWithPiston(code: string, input: any, language: string) {
+  const wrappedCode = `
+${code}
+
+// call solution
+const result = twoSum(${JSON.stringify(input.nums)}, ${input.target});
+console.log(JSON.stringify(result));
+`;
+
+  const response = await axios.post(
+    "https://emkc.org/api/v2/piston/execute",
+    {
+      language,
+      version: "18.15.0",
+      files: [
+        {
+          name: "main.js",
+          content: wrappedCode,
+        },
+      ],
+    },
+    {
+      timeout: 10000,
+    }
+  );
+
+  if (response.data.run.stderr) {
+    throw new Error(response.data.run.stderr);
+  }
+
+  return JSON.parse(response.data.run.stdout.trim());
 }
